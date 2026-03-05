@@ -1,14 +1,12 @@
 name: meplayer
 description: A simple, privacy first media viewer.
-version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+version: 1.0.1
+repository: https://github.com/JaMes-pong/meplayer
 
 environment:
   sdk: ^3.7.0
 
-# Add regular dependencies here.
 dependencies:
-  # path: ^1.8.0
   flutter:
     sdk: flutter
   media_kit: ^1.2.6

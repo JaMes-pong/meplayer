@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:meplayer/screens/media_browser_screen.dart';
 import 'screens/folder_picker_screen.dart';
 import 'package:window_manager/window_manager.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await WindowManager.instance.ensureInitialized();
-  runApp(const MePrivacyPlayerApp());
+
+  final String? openFilePath = args.isNotEmpty ? args[0] : null;
+
+  runApp(MePrivacyPlayerApp(openFilePath: openFilePath));
 }
 
 class MePrivacyPlayerApp extends StatelessWidget {
-  const MePrivacyPlayerApp({ super.key });
+  final String? openFilePath;
+  const MePrivacyPlayerApp({ super.key, this.openFilePath });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +24,7 @@ class MePrivacyPlayerApp extends StatelessWidget {
       title: 'MePlayer, Privacy first',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: const FolderPickerScreen(),
+      home: openFilePath != null ? MediaBrowserScreen.fromFile(openFilePath!) : const FolderPickerScreen(),
     );
   }
 }

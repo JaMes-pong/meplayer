@@ -9,6 +9,8 @@ No history. No tracking. Everything is forgotten when you close the app.
 
 - 🔒 **Privacy First** — no data is ever saved to disk, no history, no logs
 - 📁 **Folder-based browsing** — pick a folder on launch, browse sub-folders freely
+- 📂 **Open with support** — right-click any media file and open directly with MePlayer
+- 🎯 **Auto folder detection** — opening a file directly sets its parent folder as root
 - 🎬 **Video playback** — MP4, MKV, AVI...
 - 🎵 **Audio playback** — MP3, AAC, FLAC...
 - 🖼️ **Image viewer** — JPG, PNG, GIF...
@@ -33,13 +35,17 @@ No history. No tracking. Everything is forgotten when you close the app.
 
 ## Getting Started
 
-### Prerequisites
+### Download released application (.exe)
+- You can download the released version from Github [Release section](https://github.com/JaMes-pong/meplayer/releases).
+
+### If you want to modify / build the application by yourself:
+#### Prerequisites
 
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable channel)
 - [Visual Studio Code](https://code.visualstudio.com/) (if you want to modify the player)
 - Windows 10 or later
 
-### Install & Run
+#### Install & Run
 
 ```bash
 git clone https://github.com/JaMes-pong/meplayer.git
@@ -48,12 +54,12 @@ flutter pub get
 flutter run -d windows
 ```
 
-### Build Release EXE
+#### Build Release EXE
 ```bash
 flutter build windows --release
 ```
 
-### Output will be at:
+#### Output will be at:
 ```text
 build/windows/x64/runner/Release/
 ```
@@ -67,6 +73,12 @@ build/windows/x64/runner/Release/
 3. Browse files and sub-folders in the left panel
 4. Click any file to play/view it on the right
 5. Close the app — everything is forgotten
+
+### Open with MePlayer
+1. Right-click any supported media file in Windows Explorer
+2. Select **Open with → MePlayer**
+3. The file plays immediately, with its parent folder loaded as the root
+4. Browse sibling files freely — cannot navigate above the file's folder
 
 ### Keyboard Shortcuts
 | Key   | Action              |
@@ -100,6 +112,7 @@ build/windows/x64/runner/Release/
 ---
 
 ### Roadmap
+- [x] Open with / file association support
 - [ ] Playback speed control
 - [ ] Slideshow mode for images
 - [ ] Sort and filter by file type

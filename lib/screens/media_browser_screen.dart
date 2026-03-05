@@ -9,8 +9,22 @@ import '../widgets/thumbnail_widget.dart';
 
 class MediaBrowserScreen extends StatefulWidget {
   final String rootPath;
+  final String? initialFilePath;
 
-  const MediaBrowserScreen({super.key, required this.rootPath});
+  const MediaBrowserScreen({
+    super.key,
+    required this.rootPath,
+    this.initialFilePath,
+  });
+
+  factory MediaBrowserScreen.fromFile(String filePath) {
+    final parentFolder = File(filePath).parent.path;
+
+    return MediaBrowserScreen(
+      rootPath: parentFolder,
+      initialFilePath: filePath,
+    );
+  }
 
   @override
   State<MediaBrowserScreen> createState() => _MediaBrowserScreenState();
@@ -27,6 +41,22 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
     super.initState();
     _focusNode = FocusNode();
     _currentPath = widget.rootPath;
+
+    if (widget.initialFilePath != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final entries = _entries;
+        final mediaFiles = entries.whereType<File>().toList();
+        final idx = mediaFiles.indexWhere(
+          (f) => f.path == widget.initialFilePath,
+        );
+
+        if (idx != -1) {
+          setState(() {
+            _selectedIndex = idx;
+          });
+        }
+      });
+    }
   }
 
   @override
