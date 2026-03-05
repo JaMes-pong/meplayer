@@ -1,0 +1,39 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# Build outputs
+build/
+.build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Windows-specific
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
+
+# media_kit native libs (auto-downloaded)
+windows/runner/Debug/
+windows/runner/Release/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Environment / secrets (just in case)
+.env
+.env.*
+
+# Test coverage
+coverage/
