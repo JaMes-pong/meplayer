@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:meplayer/screens/media_browser_screen.dart';
+import 'package:meplayer/utils/app_settings.dart';
 import 'screens/folder_picker_screen.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -8,6 +9,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await WindowManager.instance.ensureInitialized();
+  await AppSettings().load();
 
   final String? openFilePath = args.isNotEmpty ? args[0] : null;
 

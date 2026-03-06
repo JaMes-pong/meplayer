@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'media_browser_screen.dart';
+import '../widgets/settings_dialog.dart';
 
 class FolderPickerScreen extends StatelessWidget {
   const FolderPickerScreen({super.key});
@@ -29,35 +30,54 @@ class FolderPickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.lock, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'MePlayer, Privacy first',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'No history. No tracking. Select a folder to begin.',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.folder_open),
-              label: const Text('Select Folder'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'MePlayer, Privacy first',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-              ),
-              onPressed: () => _pickFolder(context),
+                const SizedBox(height: 8),
+                const Text(
+                  'No history. No tracking. Select a folder to begin.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Select Folder'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => _pickFolder(context),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: IconButton(
+              icon: const Icon(Icons.settings, color: Colors.grey),
+              tooltip: 'Settings',
+              iconSize: 28,
+              onPressed:
+                  () => showDialog(
+                    context: context,
+                    builder: (_) => const SettingsDialog(),
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

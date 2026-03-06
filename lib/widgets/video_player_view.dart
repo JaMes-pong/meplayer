@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:meplayer/utils/app_settings.dart';
 import 'package:window_manager/window_manager.dart';
 
 class VideoPlayerView extends StatefulWidget {
@@ -22,6 +23,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     _player = Player();
     _controller = VideoController(_player);
     _player.open(Media(widget.file.uri.toString()));
+    _player.setVolume(AppSettings().defaultVolume);
   }
 
   @override
@@ -36,7 +38,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       children: [
         Expanded(
           child: Video(
-            controller: _controller, 
+            controller: _controller,
             controls: NoVideoControls,
             onEnterFullscreen: () async {
               await WindowManager.instance.setFullScreen(true);
@@ -68,7 +70,7 @@ class _ControlBarState extends State<_ControlBar> {
     await WindowManager.instance.setFullScreen(_isFullscreen);
     setState(() {});
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
@@ -98,7 +100,7 @@ class _ControlBarState extends State<_ControlBar> {
                         (v) => widget.player.seek(Duration(seconds: v.toInt())),
                   ),
                   // Position / Duration
-                  Text (
+                  Text(
                     "${position.toString().split('.').first} / ${duration.toString().split('.').first}",
                     style: const TextStyle(fontSize: 12),
                   ),
