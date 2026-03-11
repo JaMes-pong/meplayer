@@ -140,9 +140,11 @@ class _ControlBarState extends State<_ControlBar> {
                           stream: widget.player.stream.volume,
                           builder:
                               (_, snap) => Slider(
-                                value: (snap.data ?? 100.0) / 100,
-                                onChanged:
-                                    (v) => widget.player.setVolume(v * 100),
+                                value: (snap.data ?? AppSettings().defaultVolume) / 100,
+                                onChanged: (v) {
+                                  widget.player.setVolume(v * 100);
+                                  AppSettings().defaultVolume = v * 100;
+                                },
                               ),
                         ),
                       ),

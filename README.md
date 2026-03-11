@@ -14,6 +14,7 @@ No history. No tracking. Everything is forgotten when you close the app.
 - 🎬 **Video playback** — MP4, MKV, AVI...
 - 🎵 **Audio playback** — MP3, AAC, FLAC...
 - 🖼️ **Image viewer** — JPG, PNG, GIF...
+- 🔍 **Image zoom & rotation** — pinch/scroll to zoom, zoom in/out buttons, reset to fit, rotate 90° left or right per click
 - 🗂️ **Thumbnail preview** — grid and list view with auto-generated thumbnails
 - ⌨️ **Keyboard navigation** — arrow keys to go next/prev media
 - ⛶ **Fullscreen support** — toggle fullscreen for video playback
@@ -113,8 +114,9 @@ build/windows/x64/runner/Release/
 
 ### Roadmap
 - [x] Open with / file association support
+- [x] Image zoom and rotation
+- [x] Settings menu (extensible)
 - [ ] Playback speed control
-- [ ] Slideshow mode for images
 - [ ] Sort and filter by file type
 - [ ] Drag & drop folder support
 

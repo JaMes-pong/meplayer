@@ -1,6 +1,6 @@
 name: meplayer
 description: A simple, privacy first media viewer.
-version: 1.0.2
+version: 1.0.3
 repository: https://github.com/JaMes-pong/meplayer
 
 environment:

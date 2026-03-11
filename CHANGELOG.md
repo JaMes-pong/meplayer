@@ -9,3 +9,10 @@
 ## 1.0.2
 
 - Settings supported, default volume adjustment
+
+
+## 1.0.3
+
+- volume adjustment enhanced
+
+- Image zoom, rotation support

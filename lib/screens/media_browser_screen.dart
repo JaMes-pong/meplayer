@@ -192,7 +192,7 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
       case MediaType.audio:
         return VideoPlayerView(file: file, key: ValueKey(file.path));
       case MediaType.image:
-        return ImageViewer(file: file);
+        return ImageViewer(file: file, key: ValueKey(file.path));
       default:
         return const Center(child: Text('Unsupported file type'));
     }
