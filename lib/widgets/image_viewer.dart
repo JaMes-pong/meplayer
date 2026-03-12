@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 
 class ImageViewer extends StatefulWidget {
   final File file;
-  const ImageViewer({super.key, required this.file});
+  final VoidCallback? onNext;
+  final VoidCallback? onPrev;
+  const ImageViewer({super.key, required this.file, this.onNext, this.onPrev});
 
   @override
   State<ImageViewer> createState() => _ImageViewerState();
@@ -47,6 +49,12 @@ class _ImageViewerState extends State<ImageViewer> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Prev file
+              IconButton(
+                icon: const Icon(Icons.skip_previous),
+                tooltip: 'Previous file',
+                onPressed: widget.onPrev,
+              ),
               IconButton(
                 icon: const Icon(Icons.rotate_left),
                 tooltip: 'Rotate left',
@@ -80,6 +88,11 @@ class _ImageViewerState extends State<ImageViewer> {
                 icon: const Icon(Icons.fit_screen),
                 tooltip: 'Reset zoom & position',
                 onPressed: _resetZoom,
+              ),
+              IconButton(
+                icon: const Icon(Icons.skip_next),
+                tooltip: 'Next file',
+                onPressed: widget.onNext,
               ),
             ],
           ),

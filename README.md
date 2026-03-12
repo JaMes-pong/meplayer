@@ -116,7 +116,7 @@ build/windows/x64/runner/Release/
 - [x] Open with / file association support
 - [x] Image zoom and rotation
 - [x] Settings menu (extensible)
-- [ ] Playback speed control
+- [x] Playback speed control
 - [ ] Sort and filter by file type
 - [ ] Drag & drop folder support
 

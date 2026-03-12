@@ -190,9 +190,19 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
     switch (type) {
       case MediaType.video:
       case MediaType.audio:
-        return VideoPlayerView(file: file, key: ValueKey(file.path));
+        return VideoPlayerView(
+          file: file,
+          key: ValueKey(file.path),
+          onNext: () => _navigate(1),
+          onPrev: () => _navigate(-1),
+        );
       case MediaType.image:
-        return ImageViewer(file: file, key: ValueKey(file.path));
+        return ImageViewer(
+          file: file,
+          key: ValueKey(file.path),
+          onNext: () => _navigate(1),
+          onPrev: () => _navigate(-1),
+        );
       default:
         return const Center(child: Text('Unsupported file type'));
     }

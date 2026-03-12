@@ -10,9 +10,14 @@
 
 - Settings supported, default volume adjustment
 
-
 ## 1.0.3
 
-- volume adjustment enhanced
+- Volume adjustment enhanced
 
 - Image zoom, rotation support
+
+## 1.0.4
+
+- Playback speed, forward, backward support
+
+- Next / prev media support
