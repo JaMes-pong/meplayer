@@ -1,0 +1,50 @@
+name: Flutter Windows Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.x"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Zip the release folder
+        run: |
+          $version = "${{ github.ref_name }}"
+          $appName = "MePlayer"
+          $zipName = "$appName.$version.zip"
+
+          # Copy Release folder contents into a named folder
+          New-Item -ItemType Directory -Path $appName
+          Copy-Item -Path "build\windows\x64\runner\Release\*" -Destination $appName -Recurse
+
+          # Zip the named folder → MePlayer.v1.0.0.zip contains MePlayer\...
+          Compress-Archive -Path $appName -DestinationPath $zipName
+
+      - name: Create GitHub Release & Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
+          files: "MePlayer.${{ github.ref_name }}.zip"
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
