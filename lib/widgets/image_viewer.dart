@@ -8,10 +8,10 @@ class ImageViewer extends StatefulWidget {
   const ImageViewer({super.key, required this.file, this.onNext, this.onPrev});
 
   @override
-  State<ImageViewer> createState() => _ImageViewerState();
+  State<ImageViewer> createState() => ImageViewerState();
 }
 
-class _ImageViewerState extends State<ImageViewer> {
+class ImageViewerState extends State<ImageViewer> {
   final TransformationController _transformController =
       TransformationController();
   int _rotationQuarters = 0; // 0, 1, 2, 3 -> 0', 90', 180', 270'
@@ -22,19 +22,31 @@ class _ImageViewerState extends State<ImageViewer> {
     super.dispose();
   }
 
-  void _rotateLeft() {
+  void rotateLeft() {
     setState(() {
       _rotationQuarters = (_rotationQuarters - 1) % 4;
     });
   }
 
-  void _rotateRight() {
+  void rotateRight() {
     setState(() {
       _rotationQuarters = (_rotationQuarters + 1) % 4;
     });
   }
 
-  void _resetZoom() {
+  void zoomIn() {
+    final matrix = _transformController.value.clone();
+    matrix.scale(1.2);
+    _transformController.value = matrix;
+  }
+
+  void zoomOut() {
+    final matrix = _transformController.value.clone();
+    matrix.scale(0.8);
+    _transformController.value = matrix;
+  }
+
+  void resetZoom() {
     _transformController.value = Matrix4.identity();
   }
 
@@ -58,36 +70,28 @@ class _ImageViewerState extends State<ImageViewer> {
               IconButton(
                 icon: const Icon(Icons.rotate_left),
                 tooltip: 'Rotate left',
-                onPressed: _rotateLeft,
+                onPressed: rotateLeft,
               ),
               IconButton(
                 icon: const Icon(Icons.rotate_right),
                 tooltip: 'Rotate right',
-                onPressed: _rotateRight,
+                onPressed: rotateRight,
               ),
               const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.zoom_in),
                 tooltip: 'Zoom in',
-                onPressed: () {
-                  final matrix = _transformController.value.clone();
-                  matrix.scale(1.2);
-                  _transformController.value = matrix;
-                },
+                onPressed: zoomIn,
               ),
               IconButton(
                 icon: const Icon(Icons.zoom_out),
                 tooltip: 'Zoom out',
-                onPressed: () {
-                  final matrix = _transformController.value.clone();
-                  matrix.scale(0.8);
-                  _transformController.value = matrix;
-                },
+                onPressed: zoomOut,
               ),
               IconButton(
                 icon: const Icon(Icons.fit_screen),
                 tooltip: 'Reset zoom & position',
-                onPressed: _resetZoom,
+                onPressed: resetZoom,
               ),
               IconButton(
                 icon: const Icon(Icons.skip_next),

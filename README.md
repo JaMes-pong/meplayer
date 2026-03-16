@@ -84,9 +84,19 @@ build/windows/x64/runner/Release/
 ### Keyboard Shortcuts
 | Key   | Action              |
 | ----- | ------------------- |
-| → / ↓ | Next media file     |
-| ← / ↑ | Previous media file |
-| Esc   | Exit fullscreen     |
+| `Space` | Play / Pause |
+| `←` / `→` | Forward / Backward 10 seconds |
+| `↑` / `↓` | Next / Previous file |
+| `M` | Mute toggle |
+| `[` / `]` | Volume down / up 5% |
+| `S` | Cycle playback speed |
+| `F` | Toggle fullscreen |
+| `Esc`   | Exit fullscreen     |
+| `R` | Restart (video) / Rotate right (image) |
+| `+` / `-` | Zoom in / out (image) |
+| `0` | Reset zoom (image) |
+| `L` | Rotate left (image) |
+| `?` | Show keyboard shortcuts help |
 
 ##### More shortcuts will be added later...
 

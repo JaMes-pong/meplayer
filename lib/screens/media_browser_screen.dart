@@ -6,6 +6,7 @@ import '../widgets/video_player_view.dart';
 import '../widgets/image_viewer.dart';
 import 'folder_picker_screen.dart';
 import '../widgets/thumbnail_widget.dart';
+import '../widgets/shortcuts_help_dialog.dart';
 
 class MediaBrowserScreen extends StatefulWidget {
   final String rootPath;
@@ -36,11 +37,17 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
   late String _currentPath;
   bool _isGridView = false;
 
+  late GlobalKey<VideoPlayerViewState> _playerKey;
+  late GlobalKey<ImageViewerState> _imageKey;
+
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
     _currentPath = widget.rootPath;
+
+    _playerKey = GlobalKey<VideoPlayerViewState>();
+    _imageKey = GlobalKey<ImageViewerState>();
 
     if (widget.initialFilePath != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,6 +94,8 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
     final mediaFiles = _entries.whereType<File>().toList();
     if (mediaFiles.isEmpty) return;
     setState(() {
+      _playerKey = GlobalKey<VideoPlayerViewState>();
+      _imageKey = GlobalKey<ImageViewerState>();
       _selectedIndex = (_selectedIndex + delta).clamp(0, mediaFiles.length - 1);
     });
   }
@@ -106,6 +115,10 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
     });
   }
 
+  void _showShortcutsHelpDialog(BuildContext context) {
+    showDialog(context: context, builder: (_) => const ShortcutsHelpDialog());
+  }
+
   @override
   Widget build(BuildContext context) {
     final entries = _entries; // all entries (folders + files)
@@ -116,13 +129,70 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (evt) {
-        if (evt is KeyDownEvent) {
-          if (evt.logicalKey == LogicalKeyboardKey.arrowRight ||
-              evt.logicalKey == LogicalKeyboardKey.arrowDown) {
-            _navigate(1);
-          } else if (evt.logicalKey == LogicalKeyboardKey.arrowLeft ||
-              evt.logicalKey == LogicalKeyboardKey.arrowUp) {
-            _navigate(-1);
+        if (evt is! KeyDownEvent && evt is! KeyRepeatEvent) return;
+        final key = evt.logicalKey;
+        final entries = _entries;
+        final mediaFiles = entries.whereType<File>().toList();
+
+        if (mediaFiles.isEmpty) return;
+
+        final currentFile =
+            _selectedIndex >= 0 ? mediaFiles[_selectedIndex] : null;
+        final type =
+            currentFile != null
+                ? MediaUtils.getMediaType(currentFile.path)
+                : null;
+        final isMedia = type == MediaType.video || type == MediaType.audio;
+        final isImage = type == MediaType.image;
+
+        if (key == LogicalKeyboardKey.arrowUp || isImage && key == LogicalKeyboardKey.arrowLeft) {
+          _navigate(-1);
+          return;
+        }
+
+        if (key == LogicalKeyboardKey.arrowDown || isImage && key == LogicalKeyboardKey.arrowRight) {
+          _navigate(1);
+          return;
+        }
+
+        // video / audio controls
+        if (isMedia) {
+          if (key == LogicalKeyboardKey.space) {
+            _playerKey.currentState?.togglePlay();
+          } else if (key == LogicalKeyboardKey.arrowRight) {
+            _playerKey.currentState?.seekBy(10);
+          } else if (key == LogicalKeyboardKey.arrowLeft) {
+            _playerKey.currentState?.seekBy(-10);
+          } else if (key == LogicalKeyboardKey.keyM) {
+            _playerKey.currentState?.toggleMute();
+          } else if (key == LogicalKeyboardKey.bracketRight) {
+            _playerKey.currentState?.adjustVolume(5);
+          } else if (key == LogicalKeyboardKey.bracketLeft) {
+            _playerKey.currentState?.adjustVolume(-5);
+          } else if (key == LogicalKeyboardKey.keyS) {
+            _playerKey.currentState?.cycleSpeed();
+          } else if (key == LogicalKeyboardKey.keyF) {
+            _playerKey.currentState?.toggleFullscreen();
+          } else if (key == LogicalKeyboardKey.keyR) {
+            _playerKey.currentState?.restart();
+          }
+        }
+
+        // image controls
+        if (isImage) {
+          if (key == LogicalKeyboardKey.add ||
+              key == LogicalKeyboardKey.equal ||
+              key == LogicalKeyboardKey.numpadAdd) {
+            _imageKey.currentState?.zoomIn();
+          } else if (key == LogicalKeyboardKey.minus ||
+              key == LogicalKeyboardKey.numpadSubtract) {
+            _imageKey.currentState?.zoomOut();
+          } else if (key == LogicalKeyboardKey.digit0 || key == LogicalKeyboardKey.numpad0) {
+            _imageKey.currentState?.resetZoom();
+          } else if (key == LogicalKeyboardKey.keyL) {
+            _imageKey.currentState?.rotateLeft();
+          } else if (key == LogicalKeyboardKey.keyR) {
+            _imageKey.currentState?.rotateRight();
           }
         }
       },
@@ -150,6 +220,11 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
                   () => setState(() {
                     _isGridView = !_isGridView;
                   }),
+            ),
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'Keyboard shortcuts',
+              onPressed: () => _showShortcutsHelpDialog(context),
             ),
             if (_canGoUp)
               IconButton(
@@ -192,14 +267,14 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
       case MediaType.audio:
         return VideoPlayerView(
           file: file,
-          key: ValueKey(file.path),
+          key: _playerKey,
           onNext: () => _navigate(1),
           onPrev: () => _navigate(-1),
         );
       case MediaType.image:
         return ImageViewer(
           file: file,
-          key: ValueKey(file.path),
+          key: _imageKey,
           onNext: () => _navigate(1),
           onPrev: () => _navigate(-1),
         );
@@ -232,7 +307,12 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             selected: _selectedIndex == fileIndex,
-            onTap: () => setState(() => _selectedIndex = fileIndex),
+            onTap:
+                () => setState(() {
+                  _playerKey = GlobalKey<VideoPlayerViewState>();
+                  _imageKey = GlobalKey<ImageViewerState>();
+                  _selectedIndex = fileIndex;
+                }),
           );
         }
       },
@@ -276,7 +356,12 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
         final isSelected = _selectedIndex == fileIndex;
 
         return GestureDetector(
-          onTap: () => setState(() => _selectedIndex = fileIndex),
+          onTap:
+              () => setState(() {
+                _playerKey = GlobalKey<VideoPlayerViewState>();
+                _imageKey = GlobalKey<ImageViewerState>();
+                _selectedIndex = fileIndex;
+              }),
           child: Container(
             decoration: BoxDecoration(
               border:

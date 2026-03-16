@@ -18,12 +18,14 @@ class VideoPlayerView extends StatefulWidget {
   });
 
   @override
-  State<VideoPlayerView> createState() => _VideoPlayerViewState();
+  State<VideoPlayerView> createState() => VideoPlayerViewState();
 }
 
-class _VideoPlayerViewState extends State<VideoPlayerView> {
+class VideoPlayerViewState extends State<VideoPlayerView> {
   late final Player _player;
   late final VideoController _controller;
+
+  bool _isMuted = false;
 
   @override
   void initState() {
@@ -39,6 +41,38 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     _player.dispose(); // clears all state on close/switch
     super.dispose();
   }
+
+  void togglePlay() => _player.playOrPause();
+
+  void seekBy(int seconds) async {
+    _controlBarKey.currentState?.seekBy(seconds);
+  }
+
+  void toggleMute() {
+    _isMuted = !_isMuted;
+    _player.setVolume(_isMuted ? 0 : AppSettings().defaultVolume);
+  }
+
+  void adjustVolume(double delta) {
+    final currentVolume = _player.state.volume;
+    final newVolume = (currentVolume + delta).clamp(0.0, 100.0);
+
+    _player.setVolume(newVolume);
+
+    AppSettings().defaultVolume = newVolume;
+  }
+
+  void cycleSpeed() {
+    _controlBarKey.currentState?.cycleSpeed();
+  }
+
+  void toggleFullscreen() {
+    _controlBarKey.currentState?.toggleFullscreen();
+  }
+
+  void restart() => _player.seek(Duration.zero);
+
+  final _controlBarKey = GlobalKey<ControlBarState>();
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +90,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
             },
           ),
         ),
-        _ControlBar(
+        ControlBar(
+          key: _controlBarKey,
           player: _player,
           onNext: widget.onNext,
           onPrev: widget.onPrev,
@@ -66,21 +101,21 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   }
 }
 
-class _ControlBar extends StatefulWidget {
+class ControlBar extends StatefulWidget {
   final Player player;
   final VoidCallback? onNext;
   final VoidCallback? onPrev;
-  const _ControlBar({required this.player, this.onNext, this.onPrev});
+  const ControlBar({super.key, required this.player, this.onNext, this.onPrev});
 
   @override
-  State<_ControlBar> createState() => _ControlBarState();
+  State<ControlBar> createState() => ControlBarState();
 }
 
-class _ControlBarState extends State<_ControlBar> {
+class ControlBarState extends State<ControlBar> {
   bool _isFullscreen = false;
   double _playbackSpeed = 1.0;
 
-  void _seekBy(int seconds) async {
+  void seekBy(int seconds) async {
     PlayerState playerState = widget.player.state;
 
     final current = playerState.position;
@@ -90,7 +125,7 @@ class _ControlBarState extends State<_ControlBar> {
     await widget.player.seek(target.clamp(Duration.zero, duration));
   }
 
-  void _cycleSpeed() {
+  void cycleSpeed() {
     const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
     final nextIdx = (speeds.indexOf(_playbackSpeed) + 1) % speeds.length;
 
@@ -101,7 +136,7 @@ class _ControlBarState extends State<_ControlBar> {
     widget.player.setRate(_playbackSpeed);
   }
 
-  Future<void> _toggleFullscreen() async {
+  Future<void> toggleFullscreen() async {
     _isFullscreen = !_isFullscreen;
     await WindowManager.instance.setFullScreen(_isFullscreen);
     setState(() {});
@@ -166,7 +201,7 @@ class _ControlBarState extends State<_ControlBar> {
                       IconButton(
                         icon: const Icon(Icons.replay_10),
                         tooltip: 'Back 10 seconds',
-                        onPressed: () => _seekBy(-10),
+                        onPressed: () => seekBy(-10),
                       ),
 
                       // Play / Pause
@@ -188,7 +223,7 @@ class _ControlBarState extends State<_ControlBar> {
                       IconButton(
                         icon: const Icon(Icons.forward_10),
                         tooltip: 'Forward 10 seconds',
-                        onPressed: () => _seekBy(10),
+                        onPressed: () => seekBy(10),
                       ),
 
                       // Next file
@@ -223,7 +258,7 @@ class _ControlBarState extends State<_ControlBar> {
 
                       // Playback speed
                       TextButton(
-                        onPressed: _cycleSpeed,
+                        onPressed: cycleSpeed,
                         child: Text(
                           '${_playbackSpeed}x',
                           style: const TextStyle(fontSize: 13),
@@ -237,7 +272,7 @@ class _ControlBarState extends State<_ControlBar> {
                               ? Icons.fullscreen_exit
                               : Icons.fullscreen,
                         ),
-                        onPressed: _toggleFullscreen,
+                        onPressed: toggleFullscreen,
                       ),
                     ],
                   ),

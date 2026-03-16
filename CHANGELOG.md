@@ -21,3 +21,7 @@
 - Playback speed, forward, backward support
 
 - Next / prev media support
+
+## 1.0.5
+
+- Shortcuts support
