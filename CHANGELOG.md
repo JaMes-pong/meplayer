@@ -25,3 +25,7 @@
 ## 1.0.5
 
 - Shortcuts support
+
+## 1.0.6
+
+- fullscreen enhanced

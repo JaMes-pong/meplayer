@@ -4,12 +4,15 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:meplayer/utils/app_settings.dart';
+import 'package:meplayer/utils/fullscreen_notifier.dart';
 import 'package:window_manager/window_manager.dart';
+import '../utils/controls_notifier.dart';
 
 class VideoPlayerView extends StatefulWidget {
   final File file;
   final VoidCallback? onNext;
   final VoidCallback? onPrev;
+
   const VideoPlayerView({
     super.key,
     required this.file,
@@ -76,27 +79,41 @@ class VideoPlayerViewState extends State<VideoPlayerView> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: Video(
-            controller: _controller,
-            controls: NoVideoControls,
-            onEnterFullscreen: () async {
-              await WindowManager.instance.setFullScreen(true);
-            },
-            onExitFullscreen: () async {
-              await WindowManager.instance.setFullScreen(false);
-            },
-          ),
-        ),
-        ControlBar(
-          key: _controlBarKey,
-          player: _player,
-          onNext: widget.onNext,
-          onPrev: widget.onPrev,
-        ),
-      ],
+    return ValueListenableBuilder<bool>(
+      valueListenable: FullscreenNotifier.instance,
+      builder: (context, isFullscreen, _) {
+        return Column(
+          children: [
+            Expanded(
+              child: Video(
+                controller: _controller,
+                controls: NoVideoControls,
+                onEnterFullscreen: () async {
+                  await WindowManager.instance.setFullScreen(true);
+                },
+                onExitFullscreen: () async {
+                  await WindowManager.instance.setFullScreen(false);
+                },
+              ),
+            ),
+            ValueListenableBuilder<bool>(
+              valueListenable: ControlsNotifier.instance,
+              builder: (context, controlsVisible, _) {
+                return AnimatedOpacity(
+                  opacity: 1.0, // isFullscreen ? (controlsVisible ? 1.0 : 0.0) : 
+                  duration: const Duration(milliseconds: 300),
+                  child: ControlBar(
+                    key: _controlBarKey,
+                    player: _player,
+                    onNext: widget.onNext,
+                    onPrev: widget.onPrev,
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -137,9 +154,13 @@ class ControlBarState extends State<ControlBar> {
   }
 
   Future<void> toggleFullscreen() async {
-    _isFullscreen = !_isFullscreen;
-    await WindowManager.instance.setFullScreen(_isFullscreen);
-    setState(() {});
+    final isNowFullscreen = !FullscreenNotifier.instance.value;
+    await WindowManager.instance.setFullScreen(isNowFullscreen);
+    FullscreenNotifier.instance.value = isNowFullscreen;
+
+    if (!isNowFullscreen) {
+      ControlsNotifier.instance.value = true;
+    }
   }
 
   @override

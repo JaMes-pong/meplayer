@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/media_utils.dart';
@@ -7,6 +8,8 @@ import '../widgets/image_viewer.dart';
 import 'folder_picker_screen.dart';
 import '../widgets/thumbnail_widget.dart';
 import '../widgets/shortcuts_help_dialog.dart';
+import '../utils/fullscreen_notifier.dart';
+import '../utils/controls_notifier.dart';
 
 class MediaBrowserScreen extends StatefulWidget {
   final String rootPath;
@@ -36,9 +39,20 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
   late final FocusNode _focusNode;
   late String _currentPath;
   bool _isGridView = false;
+  Timer? _hideTimer;
 
   late GlobalKey<VideoPlayerViewState> _playerKey;
   late GlobalKey<ImageViewerState> _imageKey;
+
+  void _resetHideTimer() {
+    _hideTimer?.cancel();
+    ControlsNotifier.instance.value = true;
+    _hideTimer = Timer(const Duration(seconds: 5), () {
+      if (FullscreenNotifier.instance.value) {
+        ControlsNotifier.instance.value = false;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -69,6 +83,7 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
   @override
   void dispose() {
     _focusNode.dispose();
+    _hideTimer?.cancel();
     super.dispose();
   }
 
@@ -125,138 +140,167 @@ class _MediaBrowserScreenState extends State<MediaBrowserScreen> {
     final mediaFiles =
         entries.whereType<File>().toList(); // files only, for player
 
-    return KeyboardListener(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: (evt) {
-        if (evt is! KeyDownEvent && evt is! KeyRepeatEvent) return;
-        final key = evt.logicalKey;
-        final entries = _entries;
-        final mediaFiles = entries.whereType<File>().toList();
+    return ValueListenableBuilder<bool>(
+      valueListenable: FullscreenNotifier.instance,
+      builder: (context, isFullscreen, _) {
+        return KeyboardListener(
+          focusNode: _focusNode,
+          autofocus: true,
+          onKeyEvent: (evt) {
+            _resetHideTimer();
 
-        if (mediaFiles.isEmpty) return;
+            if (evt is! KeyDownEvent && evt is! KeyRepeatEvent) return;
 
-        final currentFile =
-            _selectedIndex >= 0 ? mediaFiles[_selectedIndex] : null;
-        final type =
-            currentFile != null
-                ? MediaUtils.getMediaType(currentFile.path)
-                : null;
-        final isMedia = type == MediaType.video || type == MediaType.audio;
-        final isImage = type == MediaType.image;
+            final key = evt.logicalKey;
+            final entries = _entries;
+            final mediaFiles = entries.whereType<File>().toList();
 
-        if (key == LogicalKeyboardKey.arrowUp || isImage && key == LogicalKeyboardKey.arrowLeft) {
-          _navigate(-1);
-          return;
-        }
+            if (mediaFiles.isEmpty) return;
 
-        if (key == LogicalKeyboardKey.arrowDown || isImage && key == LogicalKeyboardKey.arrowRight) {
-          _navigate(1);
-          return;
-        }
+            final currentFile =
+                _selectedIndex >= 0 ? mediaFiles[_selectedIndex] : null;
+            final type =
+                currentFile != null
+                    ? MediaUtils.getMediaType(currentFile.path)
+                    : null;
+            final isMedia = type == MediaType.video || type == MediaType.audio;
+            final isImage = type == MediaType.image;
 
-        // video / audio controls
-        if (isMedia) {
-          if (key == LogicalKeyboardKey.space) {
-            _playerKey.currentState?.togglePlay();
-          } else if (key == LogicalKeyboardKey.arrowRight) {
-            _playerKey.currentState?.seekBy(10);
-          } else if (key == LogicalKeyboardKey.arrowLeft) {
-            _playerKey.currentState?.seekBy(-10);
-          } else if (key == LogicalKeyboardKey.keyM) {
-            _playerKey.currentState?.toggleMute();
-          } else if (key == LogicalKeyboardKey.bracketRight) {
-            _playerKey.currentState?.adjustVolume(5);
-          } else if (key == LogicalKeyboardKey.bracketLeft) {
-            _playerKey.currentState?.adjustVolume(-5);
-          } else if (key == LogicalKeyboardKey.keyS) {
-            _playerKey.currentState?.cycleSpeed();
-          } else if (key == LogicalKeyboardKey.keyF) {
-            _playerKey.currentState?.toggleFullscreen();
-          } else if (key == LogicalKeyboardKey.keyR) {
-            _playerKey.currentState?.restart();
-          }
-        }
+            if (key == LogicalKeyboardKey.arrowUp ||
+                isImage && key == LogicalKeyboardKey.arrowLeft) {
+              _navigate(-1);
+              return;
+            }
 
-        // image controls
-        if (isImage) {
-          if (key == LogicalKeyboardKey.add ||
-              key == LogicalKeyboardKey.equal ||
-              key == LogicalKeyboardKey.numpadAdd) {
-            _imageKey.currentState?.zoomIn();
-          } else if (key == LogicalKeyboardKey.minus ||
-              key == LogicalKeyboardKey.numpadSubtract) {
-            _imageKey.currentState?.zoomOut();
-          } else if (key == LogicalKeyboardKey.digit0 || key == LogicalKeyboardKey.numpad0) {
-            _imageKey.currentState?.resetZoom();
-          } else if (key == LogicalKeyboardKey.keyL) {
-            _imageKey.currentState?.rotateLeft();
-          } else if (key == LogicalKeyboardKey.keyR) {
-            _imageKey.currentState?.rotateRight();
-          }
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            _currentPath.replaceFirst(widget.rootPath, '').isEmpty
-                ? '/ (root)'
-                : _currentPath.replaceFirst(widget.rootPath, ''),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.folder_open),
-            tooltip: 'Change folder',
-            onPressed:
-                () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FolderPickerScreen()),
-                ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
-              tooltip: _isGridView ? 'List view' : 'Grid view',
-              onPressed:
-                  () => setState(() {
-                    _isGridView = !_isGridView;
-                  }),
-            ),
-            IconButton(
-              icon: const Icon(Icons.help_outline),
-              tooltip: 'Keyboard shortcuts',
-              onPressed: () => _showShortcutsHelpDialog(context),
-            ),
-            if (_canGoUp)
-              IconButton(
-                icon: const Icon(Icons.arrow_upward),
-                tooltip: 'Go up',
-                onPressed: _goUp,
+            if (key == LogicalKeyboardKey.arrowDown ||
+                isImage && key == LogicalKeyboardKey.arrowRight) {
+              _navigate(1);
+              return;
+            }
+
+            // video / audio controls
+            if (isMedia) {
+              if (key == LogicalKeyboardKey.space) {
+                _playerKey.currentState?.togglePlay();
+              } else if (key == LogicalKeyboardKey.arrowRight) {
+                _playerKey.currentState?.seekBy(10);
+              } else if (key == LogicalKeyboardKey.arrowLeft) {
+                _playerKey.currentState?.seekBy(-10);
+              } else if (key == LogicalKeyboardKey.keyM) {
+                _playerKey.currentState?.toggleMute();
+              } else if (key == LogicalKeyboardKey.bracketRight) {
+                _playerKey.currentState?.adjustVolume(5);
+              } else if (key == LogicalKeyboardKey.bracketLeft) {
+                _playerKey.currentState?.adjustVolume(-5);
+              } else if (key == LogicalKeyboardKey.keyS) {
+                _playerKey.currentState?.cycleSpeed();
+              } else if (key == LogicalKeyboardKey.keyF) {
+                _playerKey.currentState?.toggleFullscreen();
+              } else if (key == LogicalKeyboardKey.keyR) {
+                _playerKey.currentState?.restart();
+              } else if (key == LogicalKeyboardKey.escape) {
+                if (FullscreenNotifier.instance.value) {
+                  _playerKey.currentState?.toggleFullscreen();
+                }
+              }
+            }
+
+            // image controls
+            if (isImage) {
+              if (key == LogicalKeyboardKey.add ||
+                  key == LogicalKeyboardKey.equal ||
+                  key == LogicalKeyboardKey.numpadAdd) {
+                _imageKey.currentState?.zoomIn();
+              } else if (key == LogicalKeyboardKey.minus ||
+                  key == LogicalKeyboardKey.numpadSubtract) {
+                _imageKey.currentState?.zoomOut();
+              } else if (key == LogicalKeyboardKey.digit0 ||
+                  key == LogicalKeyboardKey.numpad0) {
+                _imageKey.currentState?.resetZoom();
+              } else if (key == LogicalKeyboardKey.keyL) {
+                _imageKey.currentState?.rotateLeft();
+              } else if (key == LogicalKeyboardKey.keyR) {
+                _imageKey.currentState?.rotateRight();
+              }
+            }
+          },
+          child: MouseRegion(
+            onHover: (_) => _resetHideTimer(),
+            child: Scaffold(
+              appBar:
+                  isFullscreen
+                      ? null
+                      : AppBar(
+                        title: Text(
+                          _currentPath.replaceFirst(widget.rootPath, '').isEmpty
+                              ? '/ (root)'
+                              : _currentPath.replaceFirst(widget.rootPath, ''),
+                        ),
+                        leading: IconButton(
+                          icon: const Icon(Icons.folder_open),
+                          tooltip: 'Change folder',
+                          onPressed:
+                              () => Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const FolderPickerScreen(),
+                                ),
+                              ),
+                        ),
+                        actions: [
+                          IconButton(
+                            icon: Icon(
+                              _isGridView ? Icons.list : Icons.grid_view,
+                            ),
+                            tooltip: _isGridView ? 'List view' : 'Grid view',
+                            onPressed:
+                                () => setState(() {
+                                  _isGridView = !_isGridView;
+                                }),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.help_outline),
+                            tooltip: 'Keyboard shortcuts',
+                            onPressed: () => _showShortcutsHelpDialog(context),
+                          ),
+                          if (_canGoUp)
+                            IconButton(
+                              icon: const Icon(Icons.arrow_upward),
+                              tooltip: 'Go up',
+                              onPressed: _goUp,
+                            ),
+                        ],
+                      ),
+              body: Row(
+                children: [
+                  if (!isFullscreen)
+                    // Left: file + folder list
+                    SizedBox(
+                      width: _isGridView ? 320 : 260,
+                      child:
+                          _isGridView
+                              ? _buildGridView(entries, mediaFiles)
+                              : _buildListView(entries, mediaFiles),
+                    ),
+
+                  if (!isFullscreen) const VerticalDivider(width: 1),
+
+                  // Right: player/viewer
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        _selectedIndex == -1 || mediaFiles.isEmpty
+                            ? const Center(child: Text('Select a file to play'))
+                            : _buildPlayer(mediaFiles[_selectedIndex]),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-          ],
-        ),
-        body: Row(
-          children: [
-            // Left: file + folder list
-            SizedBox(
-              width: _isGridView ? 320 : 260,
-              child:
-                  _isGridView
-                      ? _buildGridView(entries, mediaFiles)
-                      : _buildListView(entries, mediaFiles),
             ),
-
-            const VerticalDivider(width: 1),
-
-            // Right: player/viewer
-            Expanded(
-              child:
-                  _selectedIndex == -1 || mediaFiles.isEmpty
-                      ? const Center(child: Text('Select a file to play'))
-                      : _buildPlayer(mediaFiles[_selectedIndex]),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
